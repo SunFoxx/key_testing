@@ -32,6 +32,12 @@ class AppTextStyles {
         fontSize: 16.0,
       );
 
+  static TextStyle get notificationTextStyle => secondaryFont.copyWith(
+        color: AppColors.background,
+        fontWeight: FontWeight.w300,
+        fontSize: 14.0,
+      );
+
   static TextStyle get buttonTextStyle => primaryFont.copyWith(
         color: AppColors.background,
         fontWeight: FontWeight.w600,

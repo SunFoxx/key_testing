@@ -3,12 +3,15 @@ import 'package:key_testing/theme/colors.dart';
 import 'package:key_testing/theme/typografy.dart';
 
 class TextInput extends StatefulWidget {
+  final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final ScrollController scrollController;
   final Function onFocus;
   final String label;
+  final String text;
   final double borderWidth;
   final bool isObscure;
+  final TextInputType textInputType;
 
   TextInput({
     Key key,
@@ -18,6 +21,9 @@ class TextInput extends StatefulWidget {
     this.onFocus,
     this.scrollController,
     this.isObscure = false,
+    this.controller,
+    this.text = "",
+    this.textInputType = TextInputType.text,
   }) : super(key: key);
 
   @override
@@ -29,6 +35,7 @@ class _TextInputState extends State<TextInput> {
 
   bool _isFocused = false;
   FocusNode _focusNode;
+  TextEditingController _controller;
 
   Duration get _focusTransitionDuration => Duration(milliseconds: 250);
 
@@ -36,6 +43,7 @@ class _TextInputState extends State<TextInput> {
   void initState() {
     _focusNode = FocusNode();
     _focusNode.addListener(_onFieldFocus);
+    _controller = widget.controller ?? TextEditingController(text: widget.text);
     super.initState();
   }
 
@@ -43,7 +51,16 @@ class _TextInputState extends State<TextInput> {
   void dispose() {
     _focusNode.removeListener(_onFieldFocus);
     _focusNode.unfocus();
+    _controller.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(TextInput oldWidget) {
+    if (oldWidget.text != widget.text && _controller != null) {
+      _controller.text = widget.text;
+    }
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -64,8 +81,10 @@ class _TextInputState extends State<TextInput> {
             ),
             child: CupertinoTextField(
               focusNode: _focusNode,
+              controller: _controller,
               onChanged: widget.onChanged,
               style: AppTextStyles.inputTextStyle,
+              keyboardType: widget.textInputType,
               padding: const EdgeInsets.all(11.5),
               clearButtonMode: OverlayVisibilityMode.editing,
               obscureText: widget.isObscure,

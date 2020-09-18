@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:key_testing/provider/auth_provider.dart';
 import 'package:key_testing/scenes/dashboard.dart';
-import 'package:key_testing/scenes/welcome_page.dart';
+import 'package:key_testing/scenes/welcome_page/welcome_page.dart';
 import 'package:key_testing/widgets/background.dart';
 import 'package:provider/provider.dart';
 

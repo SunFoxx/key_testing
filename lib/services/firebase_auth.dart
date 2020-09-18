@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:key_testing/provider/overlay_provider.dart';
 
 class FirebaseAuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -19,12 +20,16 @@ class FirebaseAuthService {
       );
       return credentials.user;
     } on FirebaseAuthException catch (e) {
-      print("Auth error: $e");
+      String errText = "";
       if (e.code == 'user-not-found') {
-        print('No user found for that email.');
+        errText = 'No user found for that email.';
       } else if (e.code == 'wrong-password') {
-        print('Wrong password provided for that user.');
+        errText = 'Wrong password provided for that user.';
+      } else {
+        errText = "Error: ${e.code}";
       }
+
+      _showError(errText);
     }
 
     return null;
@@ -34,8 +39,8 @@ class FirebaseAuthService {
     await _auth.signOut();
   }
 
-  static Future registerWithEmailAndPassword(
-      String email, String password) async {
+  static Future registerWithEmailAndPassword(String email, String password,
+      {String name}) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -45,20 +50,27 @@ class FirebaseAuthService {
       if (result?.user?.emailVerified == false) {
         await verifyEmail();
       }
+
+      _auth.currentUser.updateProfile(displayName: name);
     } on FirebaseAuthException catch (e) {
+      String errText = "";
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        errText = 'The password provided is too weak.';
       } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+        errText = 'The account already exists for that email.';
+      } else {
+        errText = "Error: ${e.code}";
       }
+
+      _showError(errText);
     }
   }
 
   static Future verifyEmail() async {
     try {
       await _auth.currentUser.sendEmailVerification();
-    } catch (e) {
-      print("verify error: $e");
+    } on FirebaseAuthException catch (e) {
+      _showError("sending verify email error: ${e.code}");
     }
   }
 
@@ -69,9 +81,24 @@ class FirebaseAuthService {
 
       _auth.currentUser.reload();
     } on FirebaseAuthException catch (e) {
+      String errText = "";
       if (e.code == 'invalid-action-code') {
-        print('The code is invalid.');
+        errText = 'The code is invalid.';
+      } else {
+        errText = "email verification error: ${e.code}";
       }
+
+      _showError(errText);
     }
+  }
+
+  static void _showError(String text) {
+    NotificationsProvider().showNotification(
+      NotificationElement(
+        type: NotificationType.error,
+        text: text,
+        duration: Duration(milliseconds: 1750),
+      ),
+    );
   }
 }
