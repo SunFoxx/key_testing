@@ -1,0 +1,24 @@
+name: key_testing
+description: A testing assignment for the Key team
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  provider: 4.3.2+2
+  hive: 1.4.4
+  hive_flutter: ^0.3.1
+  google_fonts: 1.1.0
+  flutter_focus_watcher: 0.0.1
+  firebase_core: ^0.5.0
+  firebase_auth: 0.18.0+1
+  cupertino_icons: ^1.0.0
+
+flutter:
+  assets:
+    - assets/images/
