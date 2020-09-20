@@ -26,6 +26,12 @@ class AppTextStyles {
         fontSize: 16.0,
       );
 
+  static TextStyle get codeInputTextStyle => primaryFont.copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w900,
+        fontSize: 32.0,
+      );
+
   static TextStyle get focusedTextStyle => secondaryFont.copyWith(
         color: AppColors.focus,
         fontWeight: FontWeight.w500,

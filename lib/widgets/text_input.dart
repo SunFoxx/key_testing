@@ -12,6 +12,8 @@ class TextInput extends StatefulWidget {
   final double borderWidth;
   final bool isObscure;
   final TextInputType textInputType;
+  final TextStyle textStyle;
+  final TextAlign textAlign;
 
   TextInput({
     Key key,
@@ -24,6 +26,8 @@ class TextInput extends StatefulWidget {
     this.controller,
     this.text = "",
     this.textInputType = TextInputType.text,
+    this.textStyle,
+    this.textAlign,
   }) : super(key: key);
 
   @override
@@ -68,7 +72,8 @@ class _TextInputState extends State<TextInput> {
     return Stack(
       children: [
         Padding(
-          padding: EdgeInsets.only(top: _labelHeight),
+          padding:
+              EdgeInsets.only(top: widget.label != null ? _labelHeight : 0),
           child: AnimatedContainer(
             duration: _focusTransitionDuration,
             decoration: BoxDecoration(
@@ -83,7 +88,8 @@ class _TextInputState extends State<TextInput> {
               focusNode: _focusNode,
               controller: _controller,
               onChanged: widget.onChanged,
-              style: AppTextStyles.inputTextStyle,
+              style: widget.textStyle ?? AppTextStyles.inputTextStyle,
+              textAlign: widget.textAlign ?? TextAlign.left,
               keyboardType: widget.textInputType,
               padding: const EdgeInsets.all(11.5),
               clearButtonMode: OverlayVisibilityMode.editing,

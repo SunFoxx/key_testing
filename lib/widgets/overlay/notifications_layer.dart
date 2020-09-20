@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:key_testing/provider/overlay_provider.dart';
+import 'package:key_testing/provider/notifications_layer_provider.dart';
 import 'package:key_testing/theme/colors.dart';
 import 'package:key_testing/theme/typografy.dart';
 import 'package:key_testing/utils/string_utils.dart';
@@ -39,7 +39,7 @@ class _NotificationsLayerState extends State<NotificationsLayer>
       color: AppColors.background,
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
-        return Consumer<NotificationsProvider>(
+        return Consumer<NotificationsLayerProvider>(
           builder: (context, state, child) {
             _element = state.activeOverlay;
 
@@ -157,7 +157,7 @@ class _NotificationsLayerState extends State<NotificationsLayer>
     }
 
     if (status == AnimationStatus.dismissed) {
-      NotificationsProvider().dismissNotification();
+      NotificationsLayerProvider().dismissNotification();
     }
   }
 }

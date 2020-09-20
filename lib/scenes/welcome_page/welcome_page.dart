@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 import 'package:key_testing/provider/auth_provider.dart';
-import 'package:key_testing/services/firebase_auth.dart';
+import 'package:key_testing/scenes/dashboard.dart';
+import 'package:key_testing/scenes/navigation.dart';
 import 'package:key_testing/theme/colors.dart';
 import 'package:key_testing/theme/typografy.dart';
 import 'package:key_testing/widgets/background.dart';
@@ -10,7 +12,7 @@ import 'package:key_testing/widgets/text_input.dart';
 import 'package:provider/provider.dart';
 
 class WelcomePage extends StatefulWidget {
-  static const String routeName = 'welcome_page';
+  static const String routeName = '/welcome_page';
 
   @override
   _WelcomePageState createState() => _WelcomePageState();
@@ -51,8 +53,7 @@ class _WelcomePageState extends State<WelcomePage>
                             style: AppTextStyles.logoStyle,
                           ),
                         ),
-                        Expanded(
-                            child: _buildAuthContainer(context, authState)),
+                        Expanded(child: _buildCardContent(context, authState)),
                       ],
                     ),
                     LoaderOverlay(isLoading: authState.isLoading),
@@ -66,8 +67,14 @@ class _WelcomePageState extends State<WelcomePage>
     );
   }
 
-  Widget _buildAuthContainer(BuildContext context, AuthProvider authState) {
-    var maxWidth = MediaQuery.of(context).size.width;
+  Widget _buildCardContent(BuildContext context, AuthProvider authState) {
+    double maxWidth = MediaQuery.of(context).size.width;
+    bool isAuthorized = authState.authorizedUser != null;
+    bool isAwaitingForVerification = authState.isAwaitingForEmailVerification;
+
+    List<Widget> stepChildren = (isAuthorized && isAwaitingForVerification)
+        ? _buildEmailConfirmationContent(context, authState)
+        : _buildAuthContent(context, authState);
 
     return Container(
       alignment: Alignment.center,
@@ -81,69 +88,111 @@ class _WelcomePageState extends State<WelcomePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              _isRegistration ? "Регистрация" : "Авторизация",
-              style: AppTextStyles.primaryFont,
-            ),
-            TextInput(
-              label: "@ Email",
-              onChanged: _onLoginEdited,
-              textInputType: TextInputType.emailAddress,
-            ),
-            TextInput(
-              label: "• Пароль",
-              onChanged: _onPasswordEdited,
-              isObscure: true,
-            ),
-            AnimatedSize(
-              duration: Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              alignment: Alignment.topCenter,
-              vsync: this,
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 800),
-                switchInCurve: Curves.easeIn,
-                switchOutCurve: Curves.easeOut,
-                layoutBuilder: (widget, previousWidgets) {
-                  return Stack(
-                    children: <Widget>[
-                      ...previousWidgets,
-                      if (widget != null) Positioned(child: widget),
-                    ],
-                  );
-                },
-                transitionBuilder: (child, animation) {
-                  return AnimatedBuilder(
-                    animation: animation,
-                    builder: (ctx, chld) {
-                      var scale = CurvedAnimation(
-                        parent: animation,
-                        curve: Interval(0.35, 1.0, curve: Curves.easeOut),
-                      );
-
-                      return ScaleTransition(
-                        scale: scale,
-                        alignment: !_isRegistration
-                            ? Alignment.topCenter
-                            : Alignment.bottomCenter,
-                        child: Opacity(
-                          child: child,
-                          opacity: animation.value,
-                        ),
-                      );
-                    },
-                  );
-                },
-                child: _isRegistration
-                    ? _buildRegistrationStep(authState)
-                    : _buildLogInStep(authState),
-              ),
-            ),
-          ],
+          children: stepChildren,
         ),
       ),
     );
+  }
+
+  List<Widget> _buildAuthContent(
+          BuildContext context, AuthProvider authState) =>
+      [
+        Text(
+          _isRegistration ? "Регистрация" : "Авторизация",
+          style: AppTextStyles.primaryFont,
+        ),
+        TextInput(
+          label: "@ Email",
+          onChanged: _onLoginEdited,
+          textInputType: TextInputType.emailAddress,
+          text: _login,
+        ),
+        TextInput(
+          label: "• Пароль",
+          onChanged: _onPasswordEdited,
+          isObscure: true,
+          text: _password,
+        ),
+        AnimatedSize(
+          duration: Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
+          vsync: this,
+          child: AnimatedSwitcher(
+            duration: Duration(milliseconds: 800),
+            switchInCurve: Curves.easeIn,
+            switchOutCurve: Curves.easeOut,
+            layoutBuilder: (widget, previousWidgets) {
+              return Stack(
+                children: <Widget>[
+                  ...previousWidgets,
+                  if (widget != null) Positioned(child: widget),
+                ],
+              );
+            },
+            transitionBuilder: (child, animation) {
+              return AnimatedBuilder(
+                animation: animation,
+                builder: (ctx, chld) {
+                  var scale = CurvedAnimation(
+                    parent: animation,
+                    curve: Interval(0.35, 1.0, curve: Curves.easeOut),
+                  );
+
+                  return ScaleTransition(
+                    scale: scale,
+                    alignment: !_isRegistration
+                        ? Alignment.topCenter
+                        : Alignment.bottomCenter,
+                    child: Opacity(
+                      child: child,
+                      opacity: animation.value,
+                    ),
+                  );
+                },
+              );
+            },
+            child: _isRegistration
+                ? _buildRegistrationStep(authState)
+                : _buildLogInStep(authState),
+          ),
+        ),
+      ];
+
+  List<Widget> _buildEmailConfirmationContent(
+      BuildContext context, AuthProvider authState) {
+    /// when user confirms his email, we need to move him to dashboard automatically
+    if (authState.authorizedUser.emailVerified == true) {
+      NavigationHandler.push(context, DashboardScene.routeName);
+      return [SizedBox(height: 200)];
+    }
+
+    return [
+      Text(
+        "Подтверждение почты",
+        style: AppTextStyles.primaryFont,
+      ),
+      SizedBox(height: 15),
+      Text(
+        "Перейдите по ссылке в письме, которое было отправлено на вашу почту, чтобы продолжить",
+        style: AppTextStyles.inputLabelStyle,
+        textAlign: TextAlign.center,
+      ),
+      CupertinoButton(
+        child: Text(
+          "Отправить повторно",
+          style: AppTextStyles.focusedTextStyle,
+        ),
+        onPressed: authState.sendVerificationLink,
+      ),
+      CupertinoButton(
+        child: Text(
+          "Назад",
+          style: AppTextStyles.focusedTextStyle,
+        ),
+        onPressed: _onEmailVerificationCancelled,
+      ),
+    ];
   }
 
   Widget _buildLogInStep(AuthProvider authState) {
@@ -169,15 +218,6 @@ class _WelcomePageState extends State<WelcomePage>
           ),
           onPressed: _switchSigningType,
         ),
-        CupertinoButton(
-          child: Text(
-            "Kill user: ${authState.authorizedUser?.uid}",
-            style: AppTextStyles.focusedTextStyle,
-          ),
-          onPressed: () {
-            FirebaseAuthService.signOut();
-          },
-        ),
       ],
     );
   }
@@ -191,6 +231,7 @@ class _WelcomePageState extends State<WelcomePage>
           label: "•• Повторить пароль",
           onChanged: _onRepeatPasswordEdited,
           isObscure: true,
+          text: _repeatPassword,
         ),
         Padding(
           padding: EdgeInsets.only(top: 20),
@@ -202,31 +243,38 @@ class _WelcomePageState extends State<WelcomePage>
               maxLines: 1,
             ),
             color: AppColors.focus,
-            onPressed: () => _onLoginPressed(authState),
+            onPressed: () => _onRegistrationPressed(authState),
           ),
         ),
         CupertinoButton(
           child: Text(
-            "Регистрация",
+            "Назад",
             style: AppTextStyles.focusedTextStyle,
           ),
           onPressed: _switchSigningType,
-        ),
-        CupertinoButton(
-          child: Text(
-            "Kill user: ${authState.authorizedUser?.uid}",
-            style: AppTextStyles.focusedTextStyle,
-          ),
-          onPressed: () {
-            FirebaseAuthService.signOut();
-          },
         ),
       ],
     );
   }
 
   void _onLoginPressed(AuthProvider state) async {
-    var result = await state.onAuth(_login, _password);
+    bool success = await state.logIn(_login, _password);
+
+    if (success) {
+      NavigationHandler.push(context, DashboardScene.routeName);
+    }
+  }
+
+  void _onRegistrationPressed(AuthProvider state) async {
+    await state.register(_login, _password);
+  }
+
+  void _onEmailVerificationCancelled() async {
+    await AuthProvider().logOut();
+    setState(() {
+      _isRegistration = false;
+      _repeatPassword = "";
+    });
   }
 
   void _onLoginEdited(String val) {

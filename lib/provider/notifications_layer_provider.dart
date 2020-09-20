@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 
 /// using single-tone here to ease one-time accessing this provider
 /// without the need to provide [BuildContext] or listen for changes
-class NotificationsProvider extends ChangeNotifier {
-  static final NotificationsProvider _instance = NotificationsProvider._();
-  factory NotificationsProvider() => _instance;
-  NotificationsProvider._();
+class NotificationsLayerProvider extends ChangeNotifier {
+  static final NotificationsLayerProvider _instance =
+      NotificationsLayerProvider._();
+  factory NotificationsLayerProvider() => _instance;
+  NotificationsLayerProvider._();
 
   Queue<NotificationElement> _notificationsQueue = Queue();
 
@@ -16,7 +17,7 @@ class NotificationsProvider extends ChangeNotifier {
 
   void showNotification(NotificationElement entry) {
     var duplicate = _notificationsQueue.firstWhere(
-      (element) => element.text == entry.text,
+      (element) => element == entry,
       orElse: () => null,
     );
     if (duplicate == null) {
@@ -43,6 +44,17 @@ class NotificationElement {
     this.duration,
     this.onTap,
   }) : assert(type != null && text != null);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NotificationElement &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          type == other.type;
+
+  @override
+  int get hashCode => text.hashCode ^ type.hashCode;
 }
 
 enum NotificationType {

@@ -10,8 +10,15 @@ class AuthProvider extends ChangeNotifier {
   /// we have a private setter because we need notify listeners each time we change the value
   /// but the value itself shouldn't be modified from outside
   User __authorizedUser;
-  User get authorizedUser => __authorizedUser;
-  bool get isAuthorized => __authorizedUser != null;
+
+  User get authorizedUser =>
+      FirebaseAuthService.authorizedUser ?? __authorizedUser;
+
+  bool get isAuthorized => (authorizedUser?.emailVerified ?? false);
+
+  bool get isAwaitingForEmailVerification =>
+      FirebaseAuthService.isAwaitingForEmailVerification;
+
   set _authorizedUser(User user) {
     if (__authorizedUser?.uid != user?.uid) {
       __authorizedUser = user;
@@ -20,21 +27,42 @@ class AuthProvider extends ChangeNotifier {
   }
 
   bool __isLoading = false;
+
   bool get isLoading => __isLoading;
+
   set _isLoading(bool val) {
     __isLoading = val;
     notifyListeners();
   }
 
-  Future onAuth(String email, String password) async {
+  Future<bool> logIn(String email, String password) async {
     _isLoading = true;
     _authorizedUser =
         await FirebaseAuthService.signInWithEmailAndPassword(email, password);
     _isLoading = false;
+    return isAuthorized;
+  }
+
+  Future register(String email, String password) async {
+    _isLoading = true;
+    _authorizedUser = (await FirebaseAuthService.registerWithEmailAndPassword(
+            email, password))
+        ?.user;
+    _isLoading = false;
+  }
+
+  Future<bool> sendVerificationLink() async {
+    if (authorizedUser == null || authorizedUser.emailVerified == true)
+      return false;
+
+    return await FirebaseAuthService.verifyEmail();
+  }
+
+  Future logOut() async {
+    await FirebaseAuthService.signOut();
   }
 
   void _onFirebaseAuthEvent(User user) {
-    print("auth event $user");
     _authorizedUser = user;
     _isLoading = false;
   }

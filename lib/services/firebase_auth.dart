@@ -1,5 +1,7 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:key_testing/provider/overlay_provider.dart';
+import 'package:key_testing/provider/notifications_layer_provider.dart';
 
 class FirebaseAuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -9,24 +11,37 @@ class FirebaseAuthService {
 
   FirebaseAuthService._();
 
+  static Timer _emailVerificationWatcher;
+
   static Stream<User> get stream => _auth.userChanges();
 
+  static User get authorizedUser => _auth.currentUser;
+
+  static bool get isAwaitingForEmailVerification =>
+      (_emailVerificationWatcher?.isActive ?? false);
+
   static Future<User> signInWithEmailAndPassword(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     try {
       var credentials = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      if (credentials.user.emailVerified == false) {
+        await verifyEmail(true);
+      }
       return credentials.user;
     } on FirebaseAuthException catch (e) {
       String errText = "";
       if (e.code == 'user-not-found') {
-        errText = 'No user found for that email.';
+        errText = 'Пользователь с таким адресом не существует';
       } else if (e.code == 'wrong-password') {
-        errText = 'Wrong password provided for that user.';
+        errText = 'Неправильный пароль';
       } else {
-        errText = "Error: ${e.code}";
+        errText = "Ошибка входа: ${e.code}";
       }
 
       _showError(errText);
@@ -39,8 +54,8 @@ class FirebaseAuthService {
     await _auth.signOut();
   }
 
-  static Future registerWithEmailAndPassword(String email, String password,
-      {String name}) async {
+  static Future<UserCredential> registerWithEmailAndPassword(
+      String email, String password) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -50,50 +65,68 @@ class FirebaseAuthService {
       if (result?.user?.emailVerified == false) {
         await verifyEmail();
       }
-
-      _auth.currentUser.updateProfile(displayName: name);
+      return result;
     } on FirebaseAuthException catch (e) {
       String errText = "";
       if (e.code == 'weak-password') {
-        errText = 'The password provided is too weak.';
+        errText = 'Пароль слишком слабый';
       } else if (e.code == 'email-already-in-use') {
-        errText = 'The account already exists for that email.';
+        errText = 'Аккаунт с таким адресом уже существует';
       } else {
-        errText = "Error: ${e.code}";
+        errText = "Ошибка: ${e.code}";
       }
 
       _showError(errText);
     }
+
+    return null;
   }
 
-  static Future verifyEmail() async {
+  /// sending verification link and setting up periodic timer for constantly checking for confirmation
+  /// we are using [Timer] because [Stream userChanges] from firebase lib doesn't notify about verification
+  static Future<bool> verifyEmail([bool fromLogin = false]) async {
     try {
       await _auth.currentUser.sendEmailVerification();
-    } on FirebaseAuthException catch (e) {
-      _showError("sending verify email error: ${e.code}");
-    }
-  }
-
-  static Future applyEmailVerificationCode(String code) async {
-    try {
-      await _auth.checkActionCode(code);
-      await _auth.applyActionCode(code);
-
-      _auth.currentUser.reload();
+      await _watchEmailVerification();
+      return true;
     } on FirebaseAuthException catch (e) {
       String errText = "";
-      if (e.code == 'invalid-action-code') {
-        errText = 'The code is invalid.';
+      if (e.code == "too-many-requests") {
+        if (fromLogin) {
+          await _watchEmailVerification();
+          return false;
+        }
+        errText = "Подождите немного! Вы шлёте слишком много запросов";
       } else {
-        errText = "email verification error: ${e.code}";
+        errText = "Ошибка при отправке кода валидации: ${e.code}";
       }
 
       _showError(errText);
+    }
+
+    return false;
+  }
+
+  /// Manually listening for email link verification
+  static Future _watchEmailVerification() async {
+    _emailVerificationWatcher?.cancel();
+    _emailVerificationWatcher =
+        Timer(Duration(seconds: 1), _watchEmailVerification);
+
+    if (_auth.currentUser == null) {
+      _emailVerificationWatcher.cancel();
+      return;
+    }
+
+    await _auth.currentUser.reload();
+    if (_auth.currentUser.emailVerified) {
+      _emailVerificationWatcher.cancel();
+      return;
     }
   }
 
   static void _showError(String text) {
-    NotificationsProvider().showNotification(
+    NotificationsLayerProvider().showNotification(
       NotificationElement(
         type: NotificationType.error,
         text: text,

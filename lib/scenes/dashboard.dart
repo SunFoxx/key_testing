@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:key_testing/theme/colors.dart';
+import 'package:key_testing/widgets/user_info.dart';
 
 class DashboardScene extends StatefulWidget {
-  static const String routeName = 'dashboard';
+  static const String routeName = '/dashboard';
 
   @override
   _DashboardSceneState createState() => _DashboardSceneState();
@@ -10,6 +12,18 @@ class DashboardScene extends StatefulWidget {
 class _DashboardSceneState extends State<DashboardScene> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return CupertinoPageScaffold(
+      backgroundColor: AppColors.background,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: UserInfo(),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
