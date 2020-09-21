@@ -26,6 +26,12 @@ class AppTextStyles {
         fontSize: 16.0,
       );
 
+  static TextStyle get inputPlaceholderTextStyle => primaryFont.copyWith(
+        color: AppColors.primary55,
+        fontWeight: FontWeight.w400,
+        fontSize: 16.0,
+      );
+
   static TextStyle get codeInputTextStyle => primaryFont.copyWith(
         color: AppColors.primary,
         fontWeight: FontWeight.w900,
@@ -49,5 +55,17 @@ class AppTextStyles {
         fontWeight: FontWeight.w600,
         fontSize: 18.0,
         letterSpacing: 1.0,
+      );
+
+  static TextStyle get buttonTinyTextStyle => primaryFont.copyWith(
+        color: AppColors.background,
+        fontWeight: FontWeight.w200,
+        fontSize: 10.0,
+      );
+
+  static TextStyle get backgroundedSmall => primaryFont.copyWith(
+        color: AppColors.background,
+        fontWeight: FontWeight.w300,
+        fontSize: 12.0,
       );
 }

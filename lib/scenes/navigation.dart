@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:key_testing/scenes/welcome_page/welcome_page.dart';
 
-import 'dashboard.dart';
+import 'dashboard/dashboard.dart';
 import 'initial_scene.dart';
 
 /// class with static methods that adapt [Navigator] for the app's needs

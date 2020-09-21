@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:key_testing/provider/auth_provider.dart';
-import 'package:key_testing/scenes/dashboard.dart';
+import 'package:key_testing/scenes/dashboard/dashboard.dart';
 import 'package:key_testing/scenes/navigation.dart';
 import 'package:key_testing/scenes/welcome_page/welcome_page.dart';
 import 'package:key_testing/widgets/background.dart';
@@ -33,9 +33,10 @@ class _InitialSceneState extends State<InitialScene> {
     ]);
 
     AuthProvider authState = Provider.of<AuthProvider>(context, listen: false);
-    String routeDestination = authState.isAuthorized
-        ? DashboardScene.routeName
-        : WelcomePage.routeName;
+    String routeDestination =
+        authState.authorizedFirebaseUser?.emailVerified == true
+            ? DashboardScene.routeName
+            : WelcomePage.routeName;
 
     await NavigationHandler.push(
       context,

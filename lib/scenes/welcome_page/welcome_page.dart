@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 import 'package:key_testing/provider/auth_provider.dart';
-import 'package:key_testing/scenes/dashboard.dart';
+import 'package:key_testing/scenes/dashboard/dashboard.dart';
 import 'package:key_testing/scenes/navigation.dart';
 import 'package:key_testing/theme/colors.dart';
 import 'package:key_testing/theme/typografy.dart';
@@ -69,10 +69,8 @@ class _WelcomePageState extends State<WelcomePage>
 
   Widget _buildCardContent(BuildContext context, AuthProvider authState) {
     double maxWidth = MediaQuery.of(context).size.width;
-    bool isAuthorized = authState.authorizedUser != null;
-    bool isAwaitingForVerification = authState.isAwaitingForEmailVerification;
 
-    List<Widget> stepChildren = (isAuthorized && isAwaitingForVerification)
+    List<Widget> stepChildren = (authState.isAwaitingForEmailVerification)
         ? _buildEmailConfirmationContent(context, authState)
         : _buildAuthContent(context, authState);
 
@@ -160,40 +158,33 @@ class _WelcomePageState extends State<WelcomePage>
       ];
 
   List<Widget> _buildEmailConfirmationContent(
-      BuildContext context, AuthProvider authState) {
-    /// when user confirms his email, we need to move him to dashboard automatically
-    if (authState.authorizedUser.emailVerified == true) {
-      NavigationHandler.push(context, DashboardScene.routeName);
-      return [SizedBox(height: 200)];
-    }
-
-    return [
-      Text(
-        "Подтверждение почты",
-        style: AppTextStyles.primaryFont,
-      ),
-      SizedBox(height: 15),
-      Text(
-        "Перейдите по ссылке в письме, которое было отправлено на вашу почту, чтобы продолжить",
-        style: AppTextStyles.inputLabelStyle,
-        textAlign: TextAlign.center,
-      ),
-      CupertinoButton(
-        child: Text(
-          "Отправить повторно",
-          style: AppTextStyles.focusedTextStyle,
+          BuildContext context, AuthProvider authState) =>
+      [
+        Text(
+          "Подтверждение почты",
+          style: AppTextStyles.primaryFont,
         ),
-        onPressed: authState.sendVerificationLink,
-      ),
-      CupertinoButton(
-        child: Text(
-          "Назад",
-          style: AppTextStyles.focusedTextStyle,
+        SizedBox(height: 15),
+        Text(
+          "Перейдите по ссылке в письме, которое было отправлено на вашу почту, чтобы продолжить",
+          style: AppTextStyles.inputLabelStyle,
+          textAlign: TextAlign.center,
         ),
-        onPressed: _onEmailVerificationCancelled,
-      ),
-    ];
-  }
+        CupertinoButton(
+          child: Text(
+            "Отправить повторно",
+            style: AppTextStyles.focusedTextStyle,
+          ),
+          onPressed: () => authState.sendVerificationLink(_redirectToDashboard),
+        ),
+        CupertinoButton(
+          child: Text(
+            "Назад",
+            style: AppTextStyles.focusedTextStyle,
+          ),
+          onPressed: _onEmailVerificationCancelled,
+        ),
+      ];
 
   Widget _buildLogInStep(AuthProvider authState) {
     return Column(
@@ -258,15 +249,15 @@ class _WelcomePageState extends State<WelcomePage>
   }
 
   void _onLoginPressed(AuthProvider state) async {
-    bool success = await state.logIn(_login, _password);
-
-    if (success) {
-      NavigationHandler.push(context, DashboardScene.routeName);
-    }
+    await state.logIn(_login, _password, _redirectToDashboard);
   }
 
   void _onRegistrationPressed(AuthProvider state) async {
-    await state.register(_login, _password);
+    await state.register(_login, _password, _redirectToDashboard);
+  }
+
+  void _redirectToDashboard() {
+    NavigationHandler.push(context, DashboardScene.routeName);
   }
 
   void _onEmailVerificationCancelled() async {

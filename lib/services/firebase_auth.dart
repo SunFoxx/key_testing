@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:key_testing/model/user.dart';
 import 'package:key_testing/provider/notifications_layer_provider.dart';
+import 'package:key_testing/services/firebase_database.dart';
 
 class FirebaseAuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,14 +18,21 @@ class FirebaseAuthService {
 
   static Stream<User> get stream => _auth.userChanges();
 
-  static User get authorizedUser => _auth.currentUser;
+  static User get authorizedFirebaseUser => _auth.currentUser;
 
-  static bool get isAwaitingForEmailVerification =>
-      (_emailVerificationWatcher?.isActive ?? false);
+  static KeyUser get authorizedUser {
+    FirebaseDatabaseService.getUserByEmail(authorizedFirebaseUser?.email)
+        .then((keyUser) {
+      return keyUser;
+    });
 
-  static Future<User> signInWithEmailAndPassword(
+    return null;
+  }
+
+  static Future<KeyUser> signInWithEmailAndPassword(
     String email,
     String password,
+    VoidCallback successCallback,
   ) async {
     try {
       var credentials = await _auth.signInWithEmailAndPassword(
@@ -30,10 +40,14 @@ class FirebaseAuthService {
         password: password,
       );
 
+      var keyUser = await FirebaseDatabaseService.getUserByEmail(email);
+
       if (credentials.user.emailVerified == false) {
-        await verifyEmail(true);
+        await verifyEmail(true, successCallback);
+      } else {
+        successCallback();
       }
-      return credentials.user;
+      return keyUser;
     } on FirebaseAuthException catch (e) {
       String errText = "";
       if (e.code == 'user-not-found') {
@@ -54,18 +68,24 @@ class FirebaseAuthService {
     await _auth.signOut();
   }
 
-  static Future<UserCredential> registerWithEmailAndPassword(
-      String email, String password) async {
+  static Future<KeyUser> registerWithEmailAndPassword(
+    String email,
+    String password,
+    VoidCallback onEmailVerificationCallback,
+  ) async {
     try {
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
+      var firebaseCredentials = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      if (result?.user?.emailVerified == false) {
-        await verifyEmail();
+      var keyUser =
+          await FirebaseDatabaseService.createUser(firebaseCredentials.user);
+      if (firebaseCredentials?.user?.emailVerified == false) {
+        await verifyEmail(false, onEmailVerificationCallback);
       }
-      return result;
+
+      return keyUser;
     } on FirebaseAuthException catch (e) {
       String errText = "";
       if (e.code == 'weak-password') {
@@ -84,16 +104,19 @@ class FirebaseAuthService {
 
   /// sending verification link and setting up periodic timer for constantly checking for confirmation
   /// we are using [Timer] because [Stream userChanges] from firebase lib doesn't notify about verification
-  static Future<bool> verifyEmail([bool fromLogin = false]) async {
+  static Future<bool> verifyEmail([
+    bool fromLogin = false,
+    VoidCallback onVerificationPassed,
+  ]) async {
     try {
       await _auth.currentUser.sendEmailVerification();
-      await _watchEmailVerification();
+      await _watchEmailVerification(onVerificationPassed);
       return true;
     } on FirebaseAuthException catch (e) {
       String errText = "";
       if (e.code == "too-many-requests") {
         if (fromLogin) {
-          await _watchEmailVerification();
+          await _watchEmailVerification(onVerificationPassed);
           return false;
         }
         errText = "Подождите немного! Вы шлёте слишком много запросов";
@@ -107,11 +130,14 @@ class FirebaseAuthService {
     return false;
   }
 
-  /// Manually listening for email link verification
-  static Future _watchEmailVerification() async {
+  /// Manually listening for email link verification because
+  /// [stream] doesn't provide automatic updates regarding email verification status
+  /// executing [onVerifiedCallback] upon successful verification
+  static Future _watchEmailVerification(
+      [VoidCallback onVerifiedCallback]) async {
     _emailVerificationWatcher?.cancel();
-    _emailVerificationWatcher =
-        Timer(Duration(seconds: 1), _watchEmailVerification);
+    _emailVerificationWatcher = Timer(Duration(seconds: 1),
+        () => _watchEmailVerification(onVerifiedCallback));
 
     if (_auth.currentUser == null) {
       _emailVerificationWatcher.cancel();
@@ -121,6 +147,7 @@ class FirebaseAuthService {
     await _auth.currentUser.reload();
     if (_auth.currentUser.emailVerified) {
       _emailVerificationWatcher.cancel();
+      if (onVerifiedCallback != null) onVerifiedCallback();
       return;
     }
   }

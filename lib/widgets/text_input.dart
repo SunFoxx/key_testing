@@ -9,6 +9,7 @@ class TextInput extends StatefulWidget {
   final Function onFocus;
   final String label;
   final String text;
+  final String placeholder;
   final double borderWidth;
   final bool isObscure;
   final TextInputType textInputType;
@@ -28,6 +29,7 @@ class TextInput extends StatefulWidget {
     this.textInputType = TextInputType.text,
     this.textStyle,
     this.textAlign,
+    this.placeholder,
   }) : super(key: key);
 
   @override
@@ -60,14 +62,6 @@ class _TextInputState extends State<TextInput> {
   }
 
   @override
-  void didUpdateWidget(TextInput oldWidget) {
-    if (oldWidget.text != widget.text && _controller != null) {
-      _controller.text = widget.text;
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
@@ -94,6 +88,8 @@ class _TextInputState extends State<TextInput> {
               padding: const EdgeInsets.all(11.5),
               clearButtonMode: OverlayVisibilityMode.editing,
               obscureText: widget.isObscure,
+              placeholder: widget.placeholder,
+              placeholderStyle: AppTextStyles.inputPlaceholderTextStyle,
               decoration: BoxDecoration(
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(10.0),
