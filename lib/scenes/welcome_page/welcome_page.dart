@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_focus_watcher/flutter_focus_watcher.dart';
 import 'package:key_testing/provider/auth_provider.dart';
+import 'package:key_testing/provider/notifications_layer_provider.dart';
 import 'package:key_testing/scenes/dashboard/dashboard.dart';
 import 'package:key_testing/scenes/navigation.dart';
 import 'package:key_testing/theme/colors.dart';
@@ -253,6 +254,16 @@ class _WelcomePageState extends State<WelcomePage>
   }
 
   void _onRegistrationPressed(AuthProvider state) async {
+    if (_password != _repeatPassword) {
+      NotificationsLayerProvider().showNotification(
+        NotificationElement(
+            type: NotificationType.error,
+            text: "Введенные пароли не совпадают",
+            duration: Duration(milliseconds: 1750)),
+      );
+
+      return;
+    }
     await state.register(_login, _password, _redirectToDashboard);
   }
 
