@@ -40,13 +40,6 @@ class KeyUser {
     ).._documentReference = snapshot.reference;
   }
 
-  void changeAdminRight(bool newRight) {
-    isAdmin = newRight;
-    if (_documentReference == null) return;
-
-    _documentReference.update({"isAdmin": newRight});
-  }
-
   KeyUser copyWith({
     String name,
     bool isAdmin,

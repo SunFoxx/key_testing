@@ -87,11 +87,12 @@ class _UserInfoState extends State<UserInfo>
                 Text(
                   user.email,
                   textAlign: TextAlign.start,
-                  style: AppTextStyles.backgroundedSmall,
+                  style: AppTextStyles.buttonTinyTextStyle,
                   maxLines: 1,
                   overflow: TextOverflow.visible,
                 ),
-                if (user.name?.isNotEmpty == true)
+                if (user.name?.isNotEmpty == true) ...[
+                  SizedBox(height: 10),
                   Text(
                     user.name,
                     textAlign: TextAlign.start,
@@ -99,6 +100,7 @@ class _UserInfoState extends State<UserInfo>
                     maxLines: 1,
                     overflow: TextOverflow.visible,
                   ),
+                ]
               ],
             ),
           ),
@@ -127,7 +129,7 @@ class _UserInfoState extends State<UserInfo>
               ),
               CupertinoSwitch(
                 value: authState.authorizedUser.isAdmin,
-                onChanged: (v) => _onAdminSwitch(v, authState.authorizedUser),
+                onChanged: (v) => _onAdminSwitch(v, authState),
               ),
             ],
           ),
@@ -143,6 +145,7 @@ class _UserInfoState extends State<UserInfo>
             children: [
               Text("👤", style: TextStyle(fontSize: 30.0)),
               CupertinoButton(
+                padding: EdgeInsets.zero,
                 child: Text(
                   "${authState.authorizedUser.name.isEmpty ? "Задать" : "Изменить"} имя",
                   style: AppTextStyles.focusedTextStyle,
@@ -160,10 +163,15 @@ class _UserInfoState extends State<UserInfo>
       switchInCurve: Curves.easeOut,
       child: _isEditingName ? _buildNameChanger(authState) : basePresentation,
       transitionBuilder: (child, animation) {
-        return SizeTransition(
-          sizeFactor: animation,
-          child: FadeTransition(
-            opacity: animation,
+        var fadeTransition = CurvedAnimation(
+          parent: animation,
+          curve: Interval(0.5, 1),
+        );
+
+        return FadeTransition(
+          opacity: fadeTransition,
+          child: SizeTransition(
+            sizeFactor: animation,
             child: child,
           ),
         );
@@ -212,7 +220,7 @@ class _UserInfoState extends State<UserInfo>
               style: AppTextStyles.buttonTinyTextStyle,
               maxLines: 1,
             ),
-            onPressed: _nameEditSwitch,
+            onPressed: () => _onNameSave(state),
             color: AppColors.focus,
           ),
         ),
@@ -220,15 +228,19 @@ class _UserInfoState extends State<UserInfo>
     );
   }
 
-  void _onAdminSwitch(bool newStatus, KeyUser user) {
-    user.changeAdminRight(newStatus);
-    setState(() {}); // rebuild widget
+  void _onAdminSwitch(bool newStatus, AuthProvider state) {
+    state.changeAdminRight(state.authorizedUser, newStatus);
   }
 
   void _onNameInputChanged(String text) {
     setState(() {
       _newName = text;
     });
+  }
+
+  void _onNameSave(AuthProvider state) {
+    state.changeUserName(_newName);
+    _nameEditSwitch();
   }
 
   void _onLogOutPressed(BuildContext context) async {

@@ -18,7 +18,7 @@ class _DashboardSceneState extends State<DashboardScene> {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: UserInfo(),
             ),
           ],

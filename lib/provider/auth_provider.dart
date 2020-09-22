@@ -79,6 +79,23 @@ class AuthProvider extends ChangeNotifier {
     await FirebaseAuthService.signOut();
   }
 
+  void changeAdminRight(KeyUser user, bool isAdmin) {
+    /// just to make sure we are changing our own admin status for test purposes
+    if (user == authorizedUser) {
+      user.isAdmin = isAdmin;
+      if (user.dbReference == null) return;
+
+      user.dbReference.update({"isAdmin": isAdmin});
+    }
+  }
+
+  void changeUserName(String name) {
+    if (authorizedUser == null) return;
+
+    authorizedUser.name = name;
+    authorizedUser.dbReference.update({"name": name});
+  }
+
   void _onFirebaseAuthEvent(User user) async {
     bool hadUserBefore = authorizedUser != null;
     KeyUser newUser;
@@ -96,6 +113,7 @@ class AuthProvider extends ChangeNotifier {
       authorizedUser.dbReference.snapshots().listen(
         (snapshot) {
           _authorizedUser = KeyUser.fromDocumentSnapshot(snapshot);
+          notifyListeners();
         },
         cancelOnError: false,
       );

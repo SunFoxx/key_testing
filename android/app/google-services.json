@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "208220412691",
+    "firebase_url": "https://key-testing-app.firebaseio.com",
+    "project_id": "key-testing-app",
+    "storage_bucket": "key-testing-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:208220412691:android:059a6a5721aa6df9c758e6",
+        "android_client_info": {
+          "package_name": "com.sunfoxx.key_testing"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "208220412691-0as0i08od55h9h6q04qs9up4t1ieo10l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBryN7IZZN76y8GTJWgL5-xI0In7hS_i_o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "208220412691-0as0i08od55h9h6q04qs9up4t1ieo10l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "208220412691-7na6vmggfidlvtpcj3udas5e5c6b5j6i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sunfoxx.keyTesting"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
